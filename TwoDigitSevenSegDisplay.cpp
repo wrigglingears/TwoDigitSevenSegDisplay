@@ -7,15 +7,32 @@
 
 /*****************************Public Methods*****************************/
 
-TwoDigitSevenSegDisplay::TwoDigitSevenSegDisplay(SingleDigitPins singledigitpins[]) {
-    _singleDigitPins = singledigitpins;
-    _setupPins();
+TwoDigitSevenSegDisplay::TwoDigitSevenSegDisplay() {
+}
+
+TwoDigitSevenSegDisplay::TwoDigitSevenSegDisplay(uint8_t pins[NUM_DIGITS][NUM_SEGMENTS]) {
+    _setupPins(pins);
     for (uint8_t i = 0; i < NUM_DIGITS; ++i) {
         writeDigit(i, BLANK_DIGIT);
     }
 }
 
 void TwoDigitSevenSegDisplay::begin() {
+    blankDisplay();
+    for (uint8_t digitNum = 0; digitNum < NUM_DIGITS; ++digitNum) {
+        for (uint8_t digit = 0; digit < 10; ++digit) {
+            writeDigit(digitNum, digit);
+            delay(200);
+        }
+    }
+    blankDisplay();
+}
+
+void TwoDigitSevenSegDisplay::begin(uint8_t pins[NUM_DIGITS][NUM_SEGMENTS]) {
+    _setupPins(pins);
+    for (uint8_t i = 0; i < NUM_DIGITS; ++i) {
+        writeDigit(i, BLANK_DIGIT);
+    }
     blankDisplay();
     for (uint8_t digitNum = 0; digitNum < NUM_DIGITS; ++digitNum) {
         for (uint8_t digit = 0; digit < 10; ++digit) {
@@ -49,37 +66,31 @@ void TwoDigitSevenSegDisplay::writeDigit(uint8_t digitNum, uint8_t digitToWrite)
     if (digitToWrite > DIGIT_TO_WRITE_MAX) {
         digitToWrite = BLANK_DIGIT;
     }
-    switch (digitToWrite) {
-        case BLANK_DIGIT:
-            for (uint8_t segmentNum = 0; segmentNum < NUM_SEGMENTS; ++segmentNum) {
-                digitalWrite(_singleDigitPins[digitNum].anodes[segmentNum], LED_OFF);
-            }
-            digitalWrite(_singleDigitPins[digitNum].dp, LED_OFF);
-            return;
-        case DECIMAL_POINT:
-            digitalWrite(_singleDigitPins[digitNum].dp, LED_ON);
-            return;
+    if (digitToWrite == BLANK_DIGIT) {
+        for (uint8_t segmentNum = 0; segmentNum < NUM_SEGMENTS; ++segmentNum) {
+            digitalWrite(_pins[digitNum][segmentNum], LED_OFF);
+        }
+        return;
     }
     for (uint8_t segmentNum = 0; segmentNum < NUM_SEGMENTS; ++segmentNum) {
         if (_segmentPrintsDigit(segmentNum, digitToWrite)) {
-            digitalWrite(_singleDigitPins[digitNum].anodes[segmentNum], LED_ON);
+            digitalWrite(_pins[digitNum][segmentNum], LED_ON);
         }
         else {
-            digitalWrite(_singleDigitPins[digitNum].anodes[segmentNum], LED_OFF);
+            digitalWrite(_pins[digitNum][segmentNum], LED_OFF);
         }
     }
 }
 
 /*****************************Private Methods*****************************/
 
-void TwoDigitSevenSegDisplay::_setupPins() {
+void TwoDigitSevenSegDisplay::_setupPins(uint8_t pins[NUM_DIGITS][NUM_SEGMENTS]) {
     for (uint8_t digitNum = 0; digitNum < NUM_DIGITS; ++digitNum) {
-        for (uint8_t anodeNum = 0; anodeNum < NUM_SEGMENTS; ++anodeNum) {
-            pinMode(_singleDigitPins[digitNum].anodes[anodeNum], OUTPUT);
-            digitalWrite(_singleDigitPins[digitNum].anodes[anodeNum], LED_OFF);
+        for (uint8_t segmentNum = 0; segmentNum < NUM_SEGMENTS; ++segmentNum) {
+            _pins[digitNum][segmentNum] = pins[digitNum][segmentNum];
+            pinMode(_pins[digitNum][segmentNum], OUTPUT);
+            digitalWrite(_pins[digitNum][segmentNum], LED_OFF);
         }
-        pinMode(_singleDigitPins[digitNum].dp, OUTPUT);
-            digitalWrite(_singleDigitPins[digitNum].dp, LED_OFF);
     }
 }
 
